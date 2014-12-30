@@ -9,42 +9,30 @@
 'use strict';
 
 module.exports = function(grunt) {
+    grunt.registerMultiTask('fnList', 'List the functions of files', function(){
+        var re = /function (\w*)? ?(\(.*\))/g;
 
-  // Please see the Grunt documentation for more information regarding task
-  // creation: http://gruntjs.com/creating-tasks
+        this.files[0].src.forEach(function(file){
+            var text = grunt.file.read(file);
+            var unnamedFns = 0;
+            var nameFns = 0;
+            var fns = [];
+            var result;
 
-  grunt.registerMultiTask('project', 'The best Grunt plugin ever.', function() {
-    // Merge task-specific and/or target-specific options with these defaults.
-    var options = this.options({
-      punctuation: '.',
-      separator: ', '
+            while( (result = re.exec(text)) !== null){
+                if(result[1] === undefined){
+                    unnamedFns++;
+                } else {
+                    nameFns++;
+                    fns.push(result[1] + result[2]);
+                }
+            }
+            grunt.log.subhead('Functions in '+ file);
+            grunt.log.writeln('# '+unnamedFns+ ' Unnamed Functions');
+            grunt.log.writeln('# '+nameFns+ ' Named Functions');
+            grunt.util.recurse(fns, function(fn){
+                grunt.log.ok(fn);
+            });
+        });
     });
-
-    // Iterate over all specified file groups.
-    this.files.forEach(function(f) {
-      // Concat specified files.
-      var src = f.src.filter(function(filepath) {
-        // Warn on and remove invalid source files (if nonull was set).
-        if (!grunt.file.exists(filepath)) {
-          grunt.log.warn('Source file "' + filepath + '" not found.');
-          return false;
-        } else {
-          return true;
-        }
-      }).map(function(filepath) {
-        // Read file source.
-        return grunt.file.read(filepath);
-      }).join(grunt.util.normalizelf(options.separator));
-
-      // Handle options.
-      src += options.punctuation;
-
-      // Write the destination file.
-      grunt.file.write(f.dest, src);
-
-      // Print a success message.
-      grunt.log.writeln('File "' + f.dest + '" created.');
-    });
-  });
-
 };
